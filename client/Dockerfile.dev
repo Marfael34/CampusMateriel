@@ -1,0 +1,15 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Installation des dépendances
+COPY package*.json ./
+RUN npm install
+
+# Copie du code source
+COPY . .
+
+EXPOSE 5173
+
+# Lancement de Vite avec exposition sur le réseau du conteneur
+CMD ["npm", "run", "dev", "--", "--host"]

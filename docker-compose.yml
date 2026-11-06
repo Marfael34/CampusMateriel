@@ -1,0 +1,65 @@
+services:
+  # Base de données MongoDB
+  mongo:
+    image: mongo:latest
+    container_name: campus_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=campus_materiel
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Back-end (Node.js / Express)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: campus_server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/campus-materiel
+      - NODE_ENV=development
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  # Front-end (React / Vite)
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: campus_client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    networks:
+      - campus-network
+
+volumes:
+  mongo_data:
+
+networks:
+  campus-network:
+    driver: bridge

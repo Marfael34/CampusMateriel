@@ -29,7 +29,7 @@ function ProductCard({ produit, onAddToCart }) {
 
       <div className="space-y-4 pt-4 border-t border-white/5">
         <div className="flex items-center justify-between text-xs font-mono text-gray-400">
-          <span>Stock total : <strong className="text-white">{produit.quantiteTotale}</strong></span>
+          <span>Stock disponible : <strong className="text-[#00E5FF]">{produit.quantiteDisponible}</strong> / {produit.quantiteTotale}</span>
         </div>
 
         {produit.disponibilite && (
@@ -43,7 +43,7 @@ function ProductCard({ produit, onAddToCart }) {
               </button>
               <span className="w-10 text-center font-mono text-sm font-bold text-white">{quantite}</span>
               <button 
-                onClick={() => setQuantite(Math.min(produit.quantiteTotale, quantite + 1))}
+                onClick={() => setQuantite(Math.min(produit.quantiteDisponible, quantite + 1))}
                 className="px-3 py-2 text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer font-bold"
               >
                 +

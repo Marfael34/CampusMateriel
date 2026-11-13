@@ -207,8 +207,9 @@ function App() {
       <Navbar 
         totalArticlesPanier={totalArticlesPanier}
         onOpenCart={() => setIsCartOpen(true)}
-        onNavigateProfile={() => setCurrentView(currentView === 'profile' ? 'catalogue' : 'profile')}
-        onNavigateAdmin={() => setCurrentView(currentView === 'admin' ? 'catalogue' : 'admin')}
+        onNavigateProfile={() => setCurrentView('profile')}
+        onNavigateAdmin={() => setCurrentView('admin')}
+        onNavigateCatalogue={() => setCurrentView('catalogue')}
         onLogout={handleLogout}
         user={user}
         currentView={currentView}

@@ -37,7 +37,6 @@ const produitSchema = new mongoose.Schema({
 }, { versionKey: false });
 const Produit = mongoose.model('Produit', produitSchema);
 
-// Sous-schéma strict pour éviter que Mongoose n'injecte des ObjectIds dans le tableau
 const produitResaSchema = new mongoose.Schema({
   _id: Number,
   nom: String,
@@ -85,7 +84,6 @@ const verifyAdmin = async (req, res, next) => {
     req.adminUser = dbUser;
     next();
   } catch (err) {
-    console.error("Erreur verifyAdmin :", err);
     res.status(500).json({ error: "Erreur serveur lors de la vérification du rôle administrateur." });
   }
 };
@@ -105,12 +103,11 @@ app.post('/api/auth/login', async (req, res) => {
 
     res.json({ token, user: { _id: user._id, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role } });
   } catch (err) {
-    console.error("Erreur login :", err);
     res.status(500).json({ error: "Erreur serveur lors de la connexion." });
   }
 });
 
-// --- ROUTES PRODUITS ---
+// --- ROUTES PRODUITS (DISPONIBILITÉ ET STOCK CALCULÉ) ---
 
 app.get('/api/produits/disponibles', verifyToken, async (req, res) => {
   try {
@@ -122,10 +119,14 @@ app.get('/api/produits/disponibles', verifyToken, async (req, res) => {
       const start = new Date(dateDebut);
       const end = new Date(dateFin);
 
-      reservations = await Reservation.find({
-        statut: { $in: ['validee', 'en_cours', 'en_attente'] },
-        dateDebut: { $lt: end },
-        dateFin: { $gt: start }
+      const toutesReservations = await Reservation.find({
+        statut: { $regex: /^(validee|en_cours|en_attente)$/i }
+      });
+
+      reservations = toutesReservations.filter(r => {
+        const rDebut = new Date(r.dateDebut);
+        const rFin = new Date(r.dateFin);
+        return rDebut < end && rFin > start;
       });
     }
 
@@ -144,14 +145,15 @@ app.get('/api/produits/disponibles', verifyToken, async (req, res) => {
     const produitsDispos = produits.map(p => {
       const pId = p._id != null ? p._id.toString() : '';
       const reserve = quantitesReservees[pId] || 0;
-      const quantiteDisponible = Math.max(0, (p.quantiteTotale || 0) - reserve);
+      const quantiteTotale = p.quantiteTotale || 0;
+      const quantiteDisponible = Math.max(0, quantiteTotale - reserve);
       const dispoFinale = (p.disponibilite === true) && (quantiteDisponible > 0);
 
       return {
         _id: p._id,
         nom: p.nom || 'Produit sans nom',
         description: p.description || '',
-        quantiteTotale: p.quantiteTotale || 0,
+        quantiteTotale: quantiteTotale,
         quantiteDisponible: quantiteDisponible,
         disponibilite: dispoFinale
       };
@@ -159,7 +161,6 @@ app.get('/api/produits/disponibles', verifyToken, async (req, res) => {
 
     res.json(produitsDispos);
   } catch (err) {
-    console.error("Erreur récupération produits :", err);
     res.status(500).json({ error: "Erreur récupération produits." });
   }
 });
@@ -229,17 +230,15 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
     const { dateDebut, dateFin, produits } = req.body;
     const userId = parseInt(req.user.id || req.user._id);
 
-    // 1. Validation stricte de la date ($expr: { $gt: ['$dateFin', '$dateDebut'] })
     const dDebut = new Date(dateDebut);
     const dFin = new Date(dateFin);
     if (dFin <= dDebut) {
       return res.status(400).json({ error: "La date de fin doit être strictement supérieure à la date de début." });
     }
 
-    // 2. Formatage strict des produits pour respecter 'additionalProperties: false' et types 'int'
     const formattedProduits = (produits || []).map(p => ({
       _id: parseInt(p._id),
-      nom: String(p.nom).trim().padEnd(2, ' ').substring(0, 100), // Assure minLength: 2 et maxLength: 100
+      nom: String(p.nom).trim().padEnd(2, ' ').substring(0, 100),
       quantite: parseInt(p.quantite) || 1
     }));
 
@@ -247,11 +246,9 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
       return res.status(400).json({ error: "Le panier est vide." });
     }
 
-    // 3. Auto-incrément manuel pour garantir un _id 'int'
     const lastResa = await Reservation.findOne().sort({ _id: -1 }).lean();
     const newId = (lastResa && lastResa._id) ? parseInt(lastResa._id) + 1 : 1;
 
-    // 4. L'objet Parfait (sans __v, sans sous-ObjectIds, exactement ce que veut ta BDD)
     const rawReservation = {
       _id: newId,
       dateDebut: dDebut,
@@ -261,12 +258,10 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
       produits: formattedProduits
     };
 
-    // 5. INSERTION DIRECTE (Bypass de la validation magique de Mongoose)
     await mongoose.connection.collection('reservations').insertOne(rawReservation);
 
     res.status(201).json(rawReservation);
   } catch (err) {
-    console.error("Erreur création réservation :", err);
     res.status(500).json({ error: "Erreur création réservation: " + err.message });
   }
 });
@@ -288,7 +283,6 @@ app.get('/api/admin/reservations', verifyToken, verifyAdmin, async (req, res) =>
 
     res.json(reservationsAvecUser);
   } catch (err) {
-    console.error("Erreur admin reservations :", err);
     res.status(500).json({ error: "Erreur lors de la récupération des réservations administrateur." });
   }
 });
@@ -303,13 +297,12 @@ app.put('/api/admin/reservations/:id/statut', verifyToken, verifyAdmin, async (r
     const resa = await Reservation.findOneAndUpdate(
       { _id: rawId },
       { statut },
-      { new: true } // Ne pose pas de souci de validation car c'est un $set ciblé sur 'statut'
+      { returnDocument: 'after' }
     );
 
     if (!resa) return res.status(404).json({ error: "Réservation introuvable." });
     res.json({ message: "Statut mis à jour avec succès", resa });
   } catch (err) {
-    console.error("Erreur update statut :", err);
     res.status(500).json({ error: "Erreur lors de la mise à jour du statut." });
   }
 });

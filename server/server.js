@@ -120,7 +120,7 @@ app.get('/api/produits/disponibles', verifyToken, async (req, res) => {
       const end = new Date(dateFin);
 
       const toutesReservations = await Reservation.find({
-        statut: { $regex: /^(validee|en_cours|en_attente)$/i }
+        statut: { $regex: /^(validee\vert{}en_cours\vert{}en_attente)$/i }
       });
 
       reservations = toutesReservations.filter(r => {
@@ -302,6 +302,33 @@ app.put('/api/admin/reservations/:id/statut', verifyToken, verifyAdmin, async (r
 
     if (!resa) return res.status(404).json({ error: "Réservation introuvable." });
     res.json({ message: "Statut mis à jour avec succès", resa });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur lors de la mise à jour du statut." });
+  }
+});
+
+// --- ROUTE UTILISATEUR : Marquer le matériel comme récupéré (statut -> en_cours) ---
+app.put('/api/reservations/:id/recuperer', verifyToken, async (req, res) => {
+  try {
+    const rawId = parseInt(req.params.id);
+    const userId = Number(req.user.id || req.user._id);
+
+    if (isNaN(rawId)) return res.status(400).json({ error: "Identifiant invalide." });
+
+    const resa = await Reservation.findOne({ _id: rawId, user_id: userId });
+
+    if (!resa) {
+      return res.status(404).json({ error: "Réservation introuvable." });
+    }
+
+    if (resa.statut !== 'validee') {
+      return res.status(400).json({ error: "Cette réservation ne peut pas être marquée comme récupérée." });
+    }
+
+    resa.statut = 'en_cours';
+    await resa.save();
+
+    res.json({ message: "Matériel récupéré avec succès.", resa });
   } catch (err) {
     res.status(500).json({ error: "Erreur lors de la mise à jour du statut." });
   }

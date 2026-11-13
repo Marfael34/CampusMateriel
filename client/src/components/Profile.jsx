@@ -6,25 +6,40 @@ function Profile({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchReservations = async () => {
-      const token = localStorage.getItem('token');
-      try {
-        const res = await fetch('http://localhost:5000/api/reservations', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error("Impossible de récupérer vos réservations.");
-        const data = await res.json();
-        setReservations(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchReservations = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/reservations', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Impossible de récupérer vos réservations.");
+      const data = await res.json();
+      setReservations(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchReservations();
   }, []);
+
+  const handleRecuperer = async (idResa) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`http://localhost:5000/api/reservations/${idResa}/recuperer`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors de la mise à jour");
+      fetchReservations();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const formatDateLocale = (dateStr) => {
     if (!dateStr) return '';
@@ -115,7 +130,7 @@ function Profile({ user }) {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enAttente.map(resa => (
-                  <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} />
+                  <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} onRecuperer={handleRecuperer} />
                 ))}
               </div>
             )}
@@ -130,7 +145,7 @@ function Profile({ user }) {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enCoursOuValidee.map(resa => (
-                  <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} />
+                  <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} onRecuperer={handleRecuperer} />
                 ))}
               </div>
             )}
@@ -145,7 +160,7 @@ function Profile({ user }) {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {terminees.map(resa => (
-                  <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} />
+                  <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} onRecuperer={handleRecuperer} />
                 ))}
               </div>
             )}
@@ -157,7 +172,7 @@ function Profile({ user }) {
   );
 }
 
-function ReservationCard({ resa, getStatusBadge, formatDateLocale }) {
+function ReservationCard({ resa, getStatusBadge, formatDateLocale, onRecuperer }) {
   return (
     <div className="bg-gradient-to-b from-[#0B0F19] to-black border border-white/10 hover:border-[#00E5FF]/30 rounded-2xl p-6 shadow-xl flex flex-col justify-between transition-all duration-300 font-inter">
       <div>
@@ -171,7 +186,7 @@ function ReservationCard({ resa, getStatusBadge, formatDateLocale }) {
           <div className="flex justify-between"><span className="text-gray-500 font-medium">Fin :</span> <span className="font-mono text-white">{formatDateLocale(resa.dateFin)}</span></div>
         </div>
 
-        <div className="space-y-2 font-inter">
+        <div className="space-y-2 font-inter mb-4">
           <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Matériel emprunté :</span>
           <ul className="divide-y divide-white/5">
             {resa.produits.map((item, idx) => (
@@ -183,6 +198,15 @@ function ReservationCard({ resa, getStatusBadge, formatDateLocale }) {
           </ul>
         </div>
       </div>
+
+      {resa.statut === 'validee' && (
+        <button 
+          onClick={() => onRecuperer(resa._id)}
+          className="w-full mt-4 py-2.5 px-4 bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-black font-bold rounded-xl text-xs tracking-wider transition-all duration-300 cursor-pointer shadow-[0_0_15px_rgba(0,229,255,0.2)] font-inter"
+        >
+          J'AI RÉCUPÉRÉ LE MATÉRIEL
+        </button>
+      )}
     </div>
   );
 }

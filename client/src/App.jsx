@@ -2,54 +2,62 @@ import { useState, useEffect } from 'react';
 import Login from './components/Login';
 import ProductCard from './components/ProductCard';
 
-
 function App() {
   const [user, setUser] = useState(null);
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
 
-  // Vérification de la session au chargement
+  // Vérifie si un token est présent au chargement initial
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Optionnel : tu pourrais décoder le token ou fetch /api/auth/me
-      // Pour l'instant, on charge les produits directement
-      fetchProduits();
+      fetchProduits(token);
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchProduits = () => {
-    fetch('http://localhost:5000/api/produits')
-      .then((res) => res.json())
-      .then((data) => {
-        setProduits(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Erreur chargement produits :", err);
-        setLoading(false);
+  const fetchProduits = async (token) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/produits', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+      if (!res.ok) throw new Error("Erreur lors de la récupération des produits");
+      const data = await res.json();
+      setProduits(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    setProduits([]);
   };
 
-  // Si pas connecté, on affiche le formulaire de login en point d'entrée
+  // Si l'utilisateur n'est pas connecté, on affiche uniquement le Login
   if (!localStorage.getItem('token') && !user) {
-    return <Login onLoginSuccess={(userData) => setUser(userData)} />;
+    return (
+      <Login 
+        onLoginSuccess={(userData) => {
+          setUser(userData);
+          setLoading(true);
+          fetchProduits(localStorage.getItem('token'));
+        }} 
+      />
+    );
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center font-['Inter']">
         <h2 className="font-['Bebas_Neue'] text-3xl tracking-wider text-[#00E5FF] animate-pulse">
-          CHARGEMENT...
+          CHARGEMENT DU CATALOGUE...
         </h2>
       </div>
     );
@@ -63,7 +71,7 @@ function App() {
             CAMPUS_MATÉRIEL
           </h1>
           <p className="text-gray-400 text-sm sm:text-base mt-1">
-            Catalogue et réservation de matériel audiovisuel
+            Catalogue du matériel audiovisuel disponible
           </p>
         </div>
         <button 
@@ -73,6 +81,12 @@ function App() {
           DÉCONNEXION
         </button>
       </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {produits.map((produit) => (
+          <ProductCard key={produit._id} produit={produit} />
+        ))}
+      </div>
     </div>
   );
 }

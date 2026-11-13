@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { Reservation } = require('../models');
-const verifyToken = require('../middleware/auth'); // Import du middleware de sécurité JWT
+const verifyToken = require('../middleware/auth');
 
-// La route est maintenant protégée par verifyToken
+// Route POST pour créer une réservation (sécurisée par JWT)
 router.post('/', verifyToken, async (req, res) => {
   try {
-    // Le user_id est récupéré directement et de façon sécurisée du JWT décodé
-    const user_id = req.user.id; 
     const { dateDebut, dateFin, produits } = req.body;
-    
+
+    if (!dateDebut || !dateFin || !produits || produits.length === 0) {
+      return res.status(400).json({ error: "Données de réservation incomplètes." });
+    }
+
     const debut = new Date(dateDebut);
     const fin = new Date(dateFin);
 
@@ -19,9 +21,9 @@ router.post('/', verifyToken, async (req, res) => {
 
     const idsProduitsDemandes = produits.map(p => p._id);
 
-    // Vérification des chevauchements dans les réservations validées/en cours
+    // 🔍 Vérification des conflits avec les réservations existantes (en attente, validées ou en cours)
     const conflit = await Reservation.findOne({
-      statut: { $in: ["validee", "en_cours"] },
+      statut: { $in: ["en_attente", "validee", "en_cours"] },
       "produits._id": { $in: idsProduitsDemandes },
       $and: [
         { dateDebut: { $lt: fin } },
@@ -30,31 +32,30 @@ router.post('/', verifyToken, async (req, res) => {
     });
 
     if (conflit) {
-      return res.status(400).json({ error: "Conflit : Matériel déjà réservé sur cette période." });
+      return res.status(400).json({ error: "Conflit : Matériel déjà réservé ou en attente sur cette période." });
     }
 
-    // Auto-incrémentation manuelle de l'ID (adapté pour tes _id en Number)
-    const derniereResa = await Reservation.findOne().sort({ _id: -1 });
-    const nouvelId = derniereResa ? derniereResa._id + 1 : 1;
-
+    // 📝 Création et enregistrement de la nouvelle réservation
     const nouvelleReservation = new Reservation({
-      _id: nouvelId,
+      // Auto-incrémentation simple de l'ID ou gestion Mongoose (ici on prend un timestamp ou ID unique)
+      _id: Date.now(), 
+      user_id: req.user.userId, // Récupéré depuis le middleware JWT
       dateDebut: debut,
       dateFin: fin,
-      statut: "en_attente",
-      user_id: Number(user_id), // Issu du token JWT
-      produits: produits.map(p => ({
-        _id: Number(p._id),
-        nom: p.nom,
-        quantite: Number(p.quantite)
-      }))
+      produits,
+      statut: 'en_attente'
     });
 
     await nouvelleReservation.save();
-    res.status(201).json({ message: "Réservation créée !", reservation: nouvelleReservation });
+
+    res.status(201).json({ 
+      message: "Réservation enregistrée avec succès !", 
+      reservation: nouvelleReservation 
+    });
+
   } catch (err) {
-    console.error("❌ Erreur réservation :", err);
-    res.status(500).json({ error: "Erreur serveur." });
+    console.error("❌ Erreur lors de la création de la réservation :", err);
+    res.status(500).json({ error: "Erreur serveur lors de la réservation." });
   }
 });
 

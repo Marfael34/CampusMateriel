@@ -44,7 +44,9 @@ stock.createCollection("users", {
                         maxLength: 15,
                         enum: ["etudiant", "enseignant", "admin"]
                     }
-                }
+                },
+                created_at: { bsonType: "datetime" },
+                estActif: { bsonType: "bool" }
             }
         }
     }

@@ -33,14 +33,14 @@ router.get('/disponibles', verifyToken, async (req, res) => {
     const quantitesReserveesMap = {};
     reservationsConflit.forEach(resa => {
       resa.produits.forEach(p => {
-        quantitesReserveesMap[p._id] = (quantitesReserveesMap[p._id] || 0) + p.quantite;
+        quantitesReserveesMap[p._id.toString()] = (quantitesReserveesMap[p._id.toString()] || 0) + p.quantite;
       });
     });
 
     // Calculer le stock disponible réel en tenant compte de la base de données
     const produits = await Produit.find();
     const produitsAvecDispo = produits.map(prod => {
-      const qteReservee = quantitesReserveesMap[prod._id] || 0;
+      const qteReservee = quantitesReserveesMap[prod._id.toString()] || 0;
       
       // Si le produit est désactivé en base (disponibilite: false), son stock dispo tombe à 0
       const quantiteDisponible = prod.disponibilite ? Math.max(0, prod.quantiteTotale - qteReservee) : 0;

@@ -1,5 +1,7 @@
-function ProductCard({ produit, onSelect }) {
-  // On utilise quantiteDisponible renvoyée par le backend (avec fallback sur quantiteTotale si non défini)
+import { useState } from 'react';
+
+function ProductCard({ produit, onAddToCart }) {
+  const [quantiteDemandee, setQuantiteDemandee] = useState(1);
   const stockAffiche = produit.quantiteDisponible !== undefined ? produit.quantiteDisponible : produit.quantiteTotale;
   const estDisponible = stockAffiche > 0;
 
@@ -24,22 +26,38 @@ function ProductCard({ produit, onSelect }) {
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-[#2F2F2F]">
-        <div className="text-sm">
-          <span className="text-gray-400">Stock dispo : </span>
-          <span className="text-white font-bold text-base">{stockAffiche} / {produit.quantiteTotale}</span>
+      <div>
+        <div className="flex items-center justify-between pt-4 border-t border-[#2F2F2F] mb-4">
+          <div className="text-sm">
+            <span className="text-gray-400">Stock dispo : </span>
+            <span className="text-white font-bold text-base">{stockAffiche} / {produit.quantiteTotale}</span>
+          </div>
+
+          {estDisponible && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400">Qté :</label>
+              <input 
+                type="number" 
+                min="1" 
+                max={stockAffiche} 
+                value={quantiteDemandee}
+                onChange={(e) => setQuantiteDemandee(Math.max(1, Math.min(stockAffiche, parseInt(e.target.value) || 1)))}
+                className="w-16 bg-black border border-[#2F2F2F] rounded text-center text-white py-1 text-sm focus:outline-none focus:border-[#00E5FF]"
+              />
+            </div>
+          )}
         </div>
 
         <button 
-          onClick={() => onSelect(produit)}
+          onClick={() => onAddToCart(produit, quantiteDemandee)}
           disabled={!estDisponible}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors cursor-pointer ${
+          className={`w-full py-2.5 rounded-lg font-bold text-sm transition-colors cursor-pointer ${
             estDisponible 
               ? 'bg-[#00E5FF] text-black hover:bg-[#00E5FF]/90' 
               : 'bg-[#2F2F2F] text-gray-500 cursor-not-allowed'
           }`}
         >
-          RÉSERVER
+          AJOUTER AU PANIER
         </button>
       </div>
     </div>

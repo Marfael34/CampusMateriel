@@ -21,11 +21,13 @@ app.use((req, res, next) => {
 // --- IMPORT ET MONTAGE DES ROUTES ---
 const produitsRoutes = require('./routes/produits');
 const reservationsRoutes = require('./routes/reservations');
-const authRoutes = require('./routes/auth'); // 👈 1. Import des routes d'authentification
+const authRoutes = require('./routes/auth');
+const panierRoutes = require('./routes/panier'); // Import des routes du panier
 
 app.use('/api/produits', produitsRoutes);
 app.use('/api/reservations', reservationsRoutes);
-app.use('/api/auth', authRoutes); // 👈 2. Montage de la route d'auth sur /api/auth
+app.use('/api/auth', authRoutes);
+app.use('/api/panier', panierRoutes); //  Montage de la route sur /api/panier
 
 app.get('/', (req, res) => {
   res.json({ message: "API Campus Matériel opérationnelle 🚀" });

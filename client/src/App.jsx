@@ -2,9 +2,17 @@ import { useState, useEffect } from 'react';
 import Login from './components/Login';
 import ProductCard from './components/ProductCard';
 import PanierModal from './components/PanierModal';
+import Profile from './components/Profile';
+import Navbar from './components/Navbar';
 
 function App() {
-  const [user, setUser] = useState(null);
+  // Récupération sécurisée de l'utilisateur stocké en local au chargement
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('campus_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [currentView, setCurrentView] = useState('catalogue'); // 'catalogue' ou 'profile'
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -21,10 +29,15 @@ function App() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  // Charger les données initiales (panier BDD + produits disponibles) au montage si token présent
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('campus_user');
+
     if (token) {
+      // S'assure que le state user est bien synchro s'il est présent en storage
+      if (!user && savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
       fetchDonneesInitiales(token);
     } else {
       setLoading(false);
@@ -34,7 +47,6 @@ function App() {
   const fetchDonneesInitiales = async (token) => {
     setLoading(true);
     try {
-      // 1. Récupérer le panier depuis MongoDB via l'API
       const resPanier = await fetch('http://localhost:5000/api/panier', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -43,7 +55,6 @@ function App() {
         setPanier(dataPanier.produits || []);
       }
 
-      // 2. Récupérer les produits disponibles pour la période par défaut
       await fetchProduitsDisponibles(token, dateDebut, dateFin);
     } catch (err) {
       console.error(err);
@@ -68,7 +79,6 @@ function App() {
     }
   };
 
-  // Fonction pour synchroniser le panier avec le backend MongoDB à chaque modification
   const syncPanierBackend = async (nouveauPanier) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -111,7 +121,7 @@ function App() {
     }
     
     setPanier(nouveauPanier);
-    syncPanierBackend(nouveauPanier); // Enregistrement automatique en BDD
+    syncPanierBackend(nouveauPanier);
     
     setSuccessMessage(`"${produit.nom}" a été ajouté au panier.`);
     setTimeout(() => setSuccessMessage(null), 3000);
@@ -150,7 +160,6 @@ function App() {
 
       setSuccessMessage("Réservation du panier enregistrée avec succès ! En attente de validation.");
       
-      // Vider le panier en BDD après validation réussie
       await fetch('http://localhost:5000/api/panier', {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -168,57 +177,42 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('campus_user');
     setUser(null);
     setProduits([]);
     setPanier([]);
+    setCurrentView('catalogue');
   };
 
   if (!localStorage.getItem('token') && !user) {
     return (
       <Login 
         onLoginSuccess={(userData) => {
-          setUser(userData);
+          // Gère les structures { user: { nom, prenom, ... } } ou directement les champs
+          const userInfo = userData.user || userData;
+          setUser(userInfo);
+          localStorage.setItem('campus_user', JSON.stringify(userInfo));
           fetchDonneesInitiales(localStorage.getItem('token'));
         }} 
       />
     );
   }
 
+  // Si l'utilisateur est sur la vue Profil
+  if (currentView === 'profile') {
+    return <Profile user={user} onBackToCatalog={() => setCurrentView('catalogue')} />;
+  }
+
   const totalArticlesPanier = panier.reduce((acc, item) => acc + item.quantite, 0);
 
   return (
     <div className="min-h-screen bg-black text-white font-['Inter'] p-4 sm:p-8 lg:p-12">
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-[#2F2F2F] gap-4">
-        <div>
-          <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl tracking-widest text-[#00E5FF] m-0">
-            CAMPUS_MATÉRIEL
-          </h1>
-          <p className="text-gray-400 text-sm sm:text-base mt-1">
-            Sélectionnez votre période d'emprunt et composez votre panier
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            className="px-4 py-2 bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] rounded-lg text-sm font-bold transition-colors cursor-pointer flex items-center gap-2 hover:bg-[#00E5FF]/20"
-          >
-            🛒 PANIER 
-            {totalArticlesPanier > 0 && (
-              <span className="bg-[#00E5FF] text-black text-xs px-2 py-0.5 rounded-full font-extrabold">
-                {totalArticlesPanier}
-              </span>
-            )}
-          </button>
-
-          <button 
-            onClick={handleLogout}
-            className="px-4 py-2 bg-[#2F2F2F] hover:bg-[#FF003C]/20 hover:text-[#FF003C] text-gray-300 rounded-lg text-sm font-bold transition-colors cursor-pointer"
-          >
-            DÉCONNEXION
-          </button>
-        </div>
-      </header>
+      <Navbar 
+        totalArticlesPanier={totalArticlesPanier}
+        onOpenCart={() => setIsCartOpen(true)}
+        onNavigateProfile={() => setCurrentView('profile')}
+        onLogout={handleLogout}
+      />
 
       {/* Barre de filtre par dates */}
       <form onSubmit={handleSearchByDate} className="bg-[#0B0F19] border border-[#2F2F2F] rounded-xl p-4 sm:p-6 mb-8 flex flex-col md:flex-row items-end gap-4 shadow-lg">
@@ -256,13 +250,13 @@ function App() {
 
       {successMessage && (
         <div className="bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] p-4 rounded-xl mb-6 font-semibold shadow-lg">
-          ✅ {successMessage}
+          {successMessage}
         </div>
       )}
 
       {errorMessage && (
         <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold shadow-lg">
-          ❌ {errorMessage}
+          {errorMessage}
         </div>
       )}
 

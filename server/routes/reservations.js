@@ -3,7 +3,19 @@ const router = express.Router();
 const { Reservation, Produit } = require('../models');
 const verifyToken = require('../middleware/auth');
 
-// Route POST pour créer une réservation globale (Panier / Multi-produits)
+// Route GET : Récupérer toutes les réservations de l'utilisateur connecté
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const userId = Number(req.user.userId || req.user.id || req.user._id);
+    const reservations = await Reservation.find({ user_id: userId }).sort({ dateDebut: -1 });
+    res.json(reservations);
+  } catch (err) {
+    console.error("❌ Erreur récupération des réservations :", err);
+    res.status(500).json({ error: "Erreur serveur lors de la récupération des réservations." });
+  }
+});
+
+// Route POST : Créer une réservation globale (Panier / Multi-produits)
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { dateDebut, dateFin, produits } = req.body;
@@ -65,12 +77,15 @@ router.post('/', verifyToken, async (req, res) => {
       });
     }
 
-    // 4. Génération d'un ID numérique sécurisé (inférieur à la limite 32-bit de MongoDB)
-    const safeNumericId = Math.floor(Date.now() / 1000); // Timestamp en secondes (~1.7 milliard, tient dans un int)
-    const userIdParsed = Number(req.user.userId || req.user.id);
+    // 4. Auto-incrément propre de l'_id basé sur les réservations existantes
+    const derniereReservation = await Reservation.findOne().sort({ _id: -1 });
+    const nouveauId = derniereReservation && typeof derniereReservation._id === 'number' ? derniereReservation._id + 1 : 1;
 
+    const userIdParsed = Number(req.user.userId || req.user.id || req.user._id);
+
+    // 5. Enregistrement de la réservation
     const nouvelleReservation = new Reservation({
-      _id: safeNumericId,
+      _id: nouveauId,
       user_id: isNaN(userIdParsed) ? 1 : userIdParsed,
       dateDebut: debut,
       dateFin: fin,

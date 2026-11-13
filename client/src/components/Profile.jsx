@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import logo from '../assets/logo.jpg';
 
-function Profile({ user, onBackToCatalog }) {
+function Profile({ user }) {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,41 +61,17 @@ function Profile({ user, onBackToCatalog }) {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-inter p-4 sm:p-8 lg:p-12 relative overflow-hidden">
-      {/* Effet lumineux d'arrière-plan */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#00E5FF]/5 rounded-full blur-3xl pointer-events-none"></div>
-
-      {/* En-tête du Profil avec Logo */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-white/10 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00E5FF] to-emerald-500 rounded-xl blur opacity-30"></div>
-            <img 
-              src={logo} 
-              alt="Logo Campus Matériel" 
-              className="relative w-12 h-12 object-cover rounded-xl border border-white/20 shadow-md" 
-            />
-          </div>
-          <div>
-            <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-white m-0">
-              ESPACE PERSONNEL
-            </h1>
-            <p className="text-gray-400 text-sm mt-0.5 font-inter">
-              Suivi de vos réservations et informations de compte
-            </p>
-          </div>
-        </div>
-
-        <button 
-          onClick={onBackToCatalog}
-          className="self-start sm:self-auto px-5 py-3 bg-[#00E5FF] text-black font-bold rounded-xl hover:bg-[#00E5FF]/90 transition-all duration-300 cursor-pointer text-xs tracking-wider shadow-[0_0_20px_rgba(0,229,255,0.2)] font-inter"
-        >
-          RETOUR AU CATALOGUE
-        </button>
+    <div className="space-y-8 font-inter">
+      <div className="pb-6 border-b border-white/10">
+        <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-white m-0">
+          ESPACE PERSONNEL
+        </h1>
+        <p className="text-gray-400 text-sm mt-0.5 font-inter">
+          Suivi de vos réservations et informations de compte
+        </p>
       </div>
 
-      {/* CARTE INFORMATIONS PERSONNELLES */}
-      <div className="bg-gradient-to-b from-[#0B0F19] to-black border border-white/10 rounded-2xl p-6 mb-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+      <div className="bg-gradient-to-b from-[#0B0F19] to-black border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-xl">
         <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-[#00E5FF] mb-4">
           IDENTIFICATION DU COMPTE
         </h2>
@@ -116,7 +92,7 @@ function Profile({ user, onBackToCatalog }) {
       </div>
 
       {error && (
-        <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold font-inter">
+        <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl font-semibold font-inter">
           {error}
         </div>
       )}
@@ -130,13 +106,12 @@ function Profile({ user, onBackToCatalog }) {
       ) : (
         <div className="space-y-12 font-inter">
           
-          {/* SECTION 1 : EN ATTENTE */}
           <section>
             <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-amber-400 mb-4 flex items-center gap-3">
               Réservations en attente <span className="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-mono">{enAttente.length}</span>
             </h2>
             {enAttente.length === 0 ? (
-              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl">Aucune réservation en attente.</p>
+              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl font-inter">Aucune réservation en attente.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enAttente.map(resa => (
@@ -146,13 +121,12 @@ function Profile({ user, onBackToCatalog }) {
             )}
           </section>
 
-          {/* SECTION 2 : EN COURS / VALIDÉES */}
           <section>
             <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-[#00E5FF] mb-4 flex items-center gap-3">
               Réservations en cours / validées <span className="bg-[#00E5FF]/20 text-[#00E5FF] text-xs px-2.5 py-0.5 rounded-full font-mono">{enCoursOuValidee.length}</span>
             </h2>
             {enCoursOuValidee.length === 0 ? (
-              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl">Aucune réservation active pour le moment.</p>
+              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl font-inter">Aucune réservation active pour le moment.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enCoursOuValidee.map(resa => (
@@ -162,13 +136,12 @@ function Profile({ user, onBackToCatalog }) {
             )}
           </section>
 
-          {/* SECTION 3 : TERMINÉES / HISTORIQUE */}
           <section>
             <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-gray-400 mb-4 flex items-center gap-3">
               Historique des emprunts <span className="bg-white/10 text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-mono">{terminees.length}</span>
             </h2>
             {terminees.length === 0 ? (
-              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl">Aucun historique disponible.</p>
+              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl font-inter">Aucun historique disponible.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {terminees.map(resa => (
@@ -193,12 +166,12 @@ function ReservationCard({ resa, getStatusBadge, formatDateLocale }) {
           {getStatusBadge(resa.statut)}
         </div>
 
-        <div className="text-xs text-gray-300 mb-5 bg-black/60 p-4 rounded-xl border border-white/5 space-y-1.5">
+        <div className="text-xs text-gray-300 mb-5 bg-black/60 p-4 rounded-xl border border-white/5 space-y-1.5 font-inter">
           <div className="flex justify-between"><span className="text-gray-500 font-medium">Début :</span> <span className="font-mono text-white">{formatDateLocale(resa.dateDebut)}</span></div>
           <div className="flex justify-between"><span className="text-gray-500 font-medium">Fin :</span> <span className="font-mono text-white">{formatDateLocale(resa.dateFin)}</span></div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 font-inter">
           <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Matériel emprunté :</span>
           <ul className="divide-y divide-white/5">
             {resa.produits.map((item, idx) => (

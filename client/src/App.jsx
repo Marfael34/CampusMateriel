@@ -3,11 +3,16 @@ import Login from './components/Login';
 import ProductCard from './components/ProductCard';
 import PanierModal from './components/PanierModal';
 import Profile from './components/Profile';
+import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [currentView, setCurrentView] = useState('catalogue'); // 'catalogue' ou 'profile'
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('campus_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [currentView, setCurrentView] = useState('catalogue'); // 'catalogue', 'profile', 'admin'
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -26,7 +31,12 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('campus_user');
+
     if (token) {
+      if (!user && savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
       fetchDonneesInitiales(token);
     } else {
       setLoading(false);
@@ -36,7 +46,6 @@ function App() {
   const fetchDonneesInitiales = async (token) => {
     setLoading(true);
     try {
-      // 1. Récupérer le panier depuis MongoDB via l'API
       const resPanier = await fetch('http://localhost:5000/api/panier', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -45,7 +54,6 @@ function App() {
         setPanier(dataPanier.produits || []);
       }
 
-      // 2. Récupérer les produits disponibles pour la période par défaut
       await fetchProduitsDisponibles(token, dateDebut, dateFin);
     } catch (err) {
       console.error(err);
@@ -70,7 +78,6 @@ function App() {
     }
   };
 
-  // Synchroniser le panier avec le backend MongoDB à chaque modification
   const syncPanierBackend = async (nouveauPanier) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -86,7 +93,7 @@ function App() {
         })
       });
     } catch (err) {
-      console.error("❌ Erreur synchro panier BDD :", err);
+      console.error("Erreur synchro panier BDD :", err);
     }
   };
 
@@ -150,9 +157,8 @@ function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur lors de la réservation");
 
-      setSuccessMessage("Réservation du panier enregistrée avec succès ! En attente de validation.");
+      setSuccessMessage("Réservation du panier enregistrée avec succès. En attente de validation.");
       
-      // Vider le panier en BDD après validation réussie
       await fetch('http://localhost:5000/api/panier', {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -170,6 +176,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('campus_user');
     setUser(null);
     setProduits([]);
     setPanier([]);
@@ -180,95 +187,102 @@ function App() {
     return (
       <Login 
         onLoginSuccess={(userData) => {
-          setUser(userData);
+          const userInfo = userData.user || userData;
+          setUser(userInfo);
+          localStorage.setItem('campus_user', JSON.stringify(userInfo));
           fetchDonneesInitiales(localStorage.getItem('token'));
         }} 
       />
     );
   }
 
-  // Si l'utilisateur est sur la vue Profil
-  if (currentView === 'profile') {
-    return <Profile user={user} onBackToCatalog={() => setCurrentView('catalogue')} />;
-  }
-
   const totalArticlesPanier = panier.reduce((acc, item) => acc + item.quantite, 0);
 
   return (
-    <div className="min-h-screen bg-black text-white font-inter m:-8 lg:p-12">
-      {/* Utilisation de la Navbar épurée sans emoji */}
+    <div className="min-h-screen bg-black text-white font-inter p-4 sm:p-8 lg:p-12 relative overflow-hidden">
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#00E5FF]/5 rounded-full blur-3xl pointer-events-none"></div>
+
       <Navbar 
         totalArticlesPanier={totalArticlesPanier}
         onOpenCart={() => setIsCartOpen(true)}
-        onNavigateProfile={() => setCurrentView('profile')}
+        onNavigateProfile={() => setCurrentView(currentView === 'profile' ? 'catalogue' : 'profile')}
+        onNavigateAdmin={() => setCurrentView(currentView === 'admin' ? 'catalogue' : 'admin')}
         onLogout={handleLogout}
+        user={user}
+        currentView={currentView}
       />
 
-      {/* Barre de filtre par dates */}
-      <form onSubmit={handleSearchByDate} className="bg-[#0B0F19] border border-[#2F2F2F] rounded-xl p-4 sm:p-6 mb-8 flex flex-col md:flex-row items-end gap-4 shadow-lg">
-        <div className="flex-1 w-full">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-            Du (Date et heure de début) :
-          </label>
-          <input 
-            type="datetime-local" 
-            value={dateDebut} 
-            onChange={(e) => setDateDebut(e.target.value)} 
-            className="w-full bg-black border border-[#2F2F2F] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00E5FF] transition-colors [color-scheme:dark]"
-            required 
-          />
-        </div>
-        <div className="flex-1 w-full">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-            Au (Date et heure de fin) :
-          </label>
-          <input 
-            type="datetime-local" 
-            value={dateFin} 
-            onChange={(e) => setDateFin(e.target.value)} 
-            className="w-full bg-black border border-[#2F2F2F] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00E5FF] transition-colors [color-scheme:dark]"
-            required 
-          />
-        </div>
-        <button 
-          type="submit" 
-          className="w-full md:w-auto px-6 py-2.5 bg-[#00E5FF] text-black font-bold rounded-lg hover:bg-[#00E5FF]/90 transition-colors cursor-pointer whitespace-nowrap"
-        >
-          VÉRIFIER LES DISPONIBILITÉS
-        </button>
-      </form>
-
       {successMessage && (
-        <div className="bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] p-4 rounded-xl mb-6 font-semibold shadow-lg">
-          ✅ {successMessage}
+        <div className="bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] p-4 rounded-xl mb-6 font-semibold text-sm shadow-lg backdrop-blur-md font-inter">
+          {successMessage}
         </div>
       )}
 
       {errorMessage && (
-        <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold shadow-lg">
-          ❌ {errorMessage}
+        <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold text-sm shadow-lg backdrop-blur-md font-inter">
+          {errorMessage}
         </div>
       )}
 
-      {loading ? (
-        <div className="text-center py-12">
-          <h2 className="font-inter text-3xl tracking-wider text-[#00E5FF] animate-pulse">
-            CHARGEMENT DU MATÉRIEL...
-          </h2>
-        </div>
+      {currentView === 'admin' && user?.role?.includes('admin') ? (
+        <AdminDashboard user={user} onBackToCatalog={() => setCurrentView('catalogue')} />
+      ) : currentView === 'profile' ? (
+        <Profile user={user} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {produits.map((produit) => (
-            <ProductCard 
-              key={produit._id} 
-              produit={produit} 
-              onAddToCart={handleAddToCart}
-            />
-          ))}
-        </div>
+        <>
+          <form onSubmit={handleSearchByDate} className="bg-gradient-to-b from-[#0B0F19] to-black border border-white/10 rounded-2xl p-6 mb-8 flex flex-col md:flex-row items-end gap-6 shadow-2xl backdrop-blur-xl">
+            <div className="flex-1 w-full">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 font-inter">
+                Du (Date et heure de début) :
+              </label>
+              <input 
+                type="datetime-local" 
+                value={dateDebut} 
+                onChange={(e) => setDateDebut(e.target.value)} 
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#00E5FF] transition-colors [color-scheme:dark] font-inter"
+                required 
+              />
+            </div>
+            <div className="flex-1 w-full">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 font-inter">
+                Au (Date et heure de fin) :
+              </label>
+              <input 
+                type="datetime-local" 
+                value={dateFin} 
+                onChange={(e) => setDateFin(e.target.value)} 
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#00E5FF] transition-colors [color-scheme:dark] font-inter"
+                required 
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="w-full md:w-auto px-6 py-3 bg-[#00E5FF] hover:bg-[#00E5FF]/90 text-black font-bold rounded-xl text-xs tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap shadow-[0_0_20px_rgba(0,229,255,0.2)] font-inter"
+            >
+              VÉRIFIER LES DISPONIBILITÉS
+            </button>
+          </form>
+
+          {loading ? (
+            <div className="text-center py-20">
+              <h2 className="font-['Bebas_Neue'] text-3xl tracking-wider text-[#00E5FF] animate-pulse">
+                CHARGEMENT DU MATÉRIEL...
+              </h2>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {produits.map((produit, index) => (
+                <ProductCard 
+                  key={produit._id ? produit._id.toString() : index} 
+                  produit={produit} 
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Modale du Panier */}
       {isCartOpen && (
         <PanierModal 
           panier={panier}

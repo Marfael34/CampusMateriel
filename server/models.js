@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   prenom: String,
   email: String,
   password: String,
-  role: String
+  role: Array
 }, { versionKey: false });
 
 const produitSchema = new mongoose.Schema({

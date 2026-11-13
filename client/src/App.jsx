@@ -6,12 +6,7 @@ import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 
 function App() {
-  // Récupération sécurisée de l'utilisateur stocké en local au chargement
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('campus_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
+  const [user, setUser] = useState(null);
   const [currentView, setCurrentView] = useState('catalogue'); // 'catalogue' ou 'profile'
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,13 +26,7 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('campus_user');
-
     if (token) {
-      // S'assure que le state user est bien synchro s'il est présent en storage
-      if (!user && savedUser) {
-        setUser(JSON.parse(savedUser));
-      }
       fetchDonneesInitiales(token);
     } else {
       setLoading(false);
@@ -47,6 +36,7 @@ function App() {
   const fetchDonneesInitiales = async (token) => {
     setLoading(true);
     try {
+      // 1. Récupérer le panier depuis MongoDB via l'API
       const resPanier = await fetch('http://localhost:5000/api/panier', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -55,6 +45,7 @@ function App() {
         setPanier(dataPanier.produits || []);
       }
 
+      // 2. Récupérer les produits disponibles pour la période par défaut
       await fetchProduitsDisponibles(token, dateDebut, dateFin);
     } catch (err) {
       console.error(err);
@@ -79,6 +70,7 @@ function App() {
     }
   };
 
+  // Synchroniser le panier avec le backend MongoDB à chaque modification
   const syncPanierBackend = async (nouveauPanier) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -160,6 +152,7 @@ function App() {
 
       setSuccessMessage("Réservation du panier enregistrée avec succès ! En attente de validation.");
       
+      // Vider le panier en BDD après validation réussie
       await fetch('http://localhost:5000/api/panier', {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -177,7 +170,6 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('campus_user');
     setUser(null);
     setProduits([]);
     setPanier([]);
@@ -188,10 +180,7 @@ function App() {
     return (
       <Login 
         onLoginSuccess={(userData) => {
-          // Gère les structures { user: { nom, prenom, ... } } ou directement les champs
-          const userInfo = userData.user || userData;
-          setUser(userInfo);
-          localStorage.setItem('campus_user', JSON.stringify(userInfo));
+          setUser(userData);
           fetchDonneesInitiales(localStorage.getItem('token'));
         }} 
       />
@@ -206,7 +195,8 @@ function App() {
   const totalArticlesPanier = panier.reduce((acc, item) => acc + item.quantite, 0);
 
   return (
-    <div className="min-h-screen bg-black text-white font-['Inter'] p-4 sm:p-8 lg:p-12">
+    <div className="min-h-screen bg-black text-white font-inter m:-8 lg:p-12">
+      {/* Utilisation de la Navbar épurée sans emoji */}
       <Navbar 
         totalArticlesPanier={totalArticlesPanier}
         onOpenCart={() => setIsCartOpen(true)}
@@ -250,19 +240,19 @@ function App() {
 
       {successMessage && (
         <div className="bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] p-4 rounded-xl mb-6 font-semibold shadow-lg">
-          {successMessage}
+          ✅ {successMessage}
         </div>
       )}
 
       {errorMessage && (
         <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold shadow-lg">
-          {errorMessage}
+          ❌ {errorMessage}
         </div>
       )}
 
       {loading ? (
         <div className="text-center py-12">
-          <h2 className="font-['Bebas_Neue'] text-3xl tracking-wider text-[#00E5FF] animate-pulse">
+          <h2 className="font-inter text-3xl tracking-wider text-[#00E5FF] animate-pulse">
             CHARGEMENT DU MATÉRIEL...
           </h2>
         </div>

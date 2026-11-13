@@ -1,45 +1,55 @@
+import logo from '../assets/logo.jpg';
+
 function Navbar({ totalArticlesPanier, onOpenCart, onNavigateProfile, onLogout }) {
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-[#2F2F2F] gap-4">
-      <div>
-        <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl tracking-widest text-[#00E5FF] m-0">
-          CAMPUS_MATÉRIEL
-        </h1>
-        <p className="text-gray-400 text-sm sm:text-base mt-1">
-          Sélectionnez votre période d'emprunt et composez votre panier
-        </p>
+    <header className="sticky top-0 z-50 bg-[#0B0F19]/90 backdrop-blur-xl border-b border-white/10 px-4 sm:px-8 py-3.5 mb-8 flex items-center justify-between transition-all font-inter shadow-xl">
+      
+      {/* Logo et Titre */}
+      <div className="flex items-center gap-3">
+        <img 
+          src={logo} 
+          alt="Logo Campus Matériel" 
+          className="w-10 h-10 object-cover rounded-xl border border-white/20 shadow-md shadow-black/50" 
+        />
+        <div className="flex flex-col">
+          <span className="font-extrabold text-sm sm:text-base tracking-tight text-white flex items-center gap-1">
+            CAMPUS <span className="text-[#00E5FF] font-black">MATÉRIEL</span>
+          </span>
+          <span className="text-[10px] text-gray-400 font-semibold tracking-wider uppercase">
+            Plateforme d'emprunt
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
-        {/* Bouton Profil */}
+      {/* Actions */}
+      <div className="flex items-center gap-2 sm:gap-3">
         <button 
           onClick={onNavigateProfile}
-          className="px-4 py-2 bg-[#2F2F2F] hover:bg-[#00E5FF]/20 hover:text-[#00E5FF] text-gray-300 rounded-lg text-sm font-bold transition-colors cursor-pointer"
+          className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white rounded-xl text-xs font-semibold tracking-wide transition-all border border-white/10 cursor-pointer"
         >
-          MON PROFIL
+          Profil
         </button>
 
-        {/* Bouton Panier avec compteur */}
         <button 
           onClick={onOpenCart}
-          className="px-4 py-2 bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] rounded-lg text-sm font-bold transition-colors cursor-pointer flex items-center gap-2 hover:bg-[#00E5FF]/20"
+          className="px-3.5 py-2 bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/30 rounded-xl text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center gap-2 shadow-[0_0_15px_rgba(0,229,255,0.1)]"
         >
-          PANIER 
+          <span>Panier</span>
           {totalArticlesPanier > 0 && (
-            <span className="bg-[#00E5FF] text-black text-xs px-2 py-0.5 rounded-full font-extrabold">
+            <span className="bg-[#00E5FF] text-black text-[10px] px-1.5 py-0.5 rounded-full font-black">
               {totalArticlesPanier}
             </span>
           )}
         </button>
 
-        {/* Bouton Déconnexion */}
         <button 
           onClick={onLogout}
-          className="px-4 py-2 bg-[#2F2F2F] hover:bg-[#FF003C]/20 hover:text-[#FF003C] text-gray-300 rounded-lg text-sm font-bold transition-colors cursor-pointer"
+          className="px-3.5 py-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-[#FF003C] border border-white/10 hover:border-red-500/20 rounded-xl text-xs font-semibold tracking-wide transition-all cursor-pointer"
         >
-          DÉCONNEXION
+          Quitter
         </button>
       </div>
+
     </header>
   );
 }

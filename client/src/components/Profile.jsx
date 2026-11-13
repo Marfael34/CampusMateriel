@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logo from '../assets/logo.jpg';
 
 function Profile({ user, onBackToCatalog }) {
   const [reservations, setReservations] = useState([]);
@@ -44,87 +45,100 @@ function Profile({ user, onBackToCatalog }) {
   const getStatusBadge = (statut) => {
     switch(statut) {
       case 'en_attente':
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/30">EN ATTENTE</span>;
+        return <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 tracking-wider font-inter">EN ATTENTE</span>;
       case 'validee':
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30">VALIDÉE</span>;
+        return <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30 tracking-wider shadow-[0_0_10px_rgba(0,229,255,0.15)] font-inter">VALIDÉE</span>;
       case 'en_cours':
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">EN COURS</span>;
+        return <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.15)] font-inter">EN COURS</span>;
       case 'terminee':
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-gray-500/10 text-gray-400 border border-gray-500/30">TERMINÉE</span>;
+        return <span className="px-3 py-1 rounded-xl text-xs font-bold bg-gray-500/10 text-gray-400 border border-gray-500/30 tracking-wider font-inter">TERMINÉE</span>;
       case 'annulee':
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30">ANNULÉE</span>;
       case 'refusee':
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30">REFUSÉE</span>;
+        return <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#FF003C]/10 text-[#FF003C] border border-[#FF003C]/30 tracking-wider font-inter">REFUSÉE / ANNULÉE</span>;
       default:
-        return <span className="px-3 py-1 rounded text-xs font-bold bg-gray-500/10 text-gray-400">{statut}</span>;
+        return <span className="px-3 py-1 rounded-xl text-xs font-bold bg-gray-500/10 text-gray-400 font-inter">{statut}</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-['Inter'] p-4 sm:p-8 lg:p-12">
-      {/* En-tête du Profil */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-[#2F2F2F] gap-4">
-        <div>
-          <h1 className="font-['Bebas_Neue']  text-4xl sm:text-5xl tracking-widest text-[#00E5FF] m-0">
-            MON PROFIL & RÉSERVATIONS
-          </h1>
-          <p className="text-gray-400 text-sm sm:text-base mt-1">
-            Gérez vos informations personnelles et suivez vos emprunts de matériel
-          </p>
+    <div className="min-h-screen bg-black text-white font-inter p-4 sm:p-8 lg:p-12 relative overflow-hidden">
+      {/* Effet lumineux d'arrière-plan */}
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#00E5FF]/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      {/* En-tête du Profil avec Logo */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-white/10 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00E5FF] to-emerald-500 rounded-xl blur opacity-30"></div>
+            <img 
+              src={logo} 
+              alt="Logo Campus Matériel" 
+              className="relative w-12 h-12 object-cover rounded-xl border border-white/20 shadow-md" 
+            />
+          </div>
+          <div>
+            <h1 className="font-['Bebas_Neue'] text-4xl sm:text-5xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-white m-0">
+              ESPACE PERSONNEL
+            </h1>
+            <p className="text-gray-400 text-sm mt-0.5 font-inter">
+              Suivi de vos réservations et informations de compte
+            </p>
+          </div>
         </div>
+
         <button 
           onClick={onBackToCatalog}
-          className="self-start sm:self-auto px-5 py-2.5 bg-[#00E5FF] text-black font-bold rounded-xl hover:bg-[#00E5FF]/90 transition-colors cursor-pointer text-sm shadow-lg"
+          className="self-start sm:self-auto px-5 py-3 bg-[#00E5FF] text-black font-bold rounded-xl hover:bg-[#00E5FF]/90 transition-all duration-300 cursor-pointer text-xs tracking-wider shadow-[0_0_20px_rgba(0,229,255,0.2)] font-inter"
         >
           RETOUR AU CATALOGUE
         </button>
       </div>
 
       {/* CARTE INFORMATIONS PERSONNELLES */}
-      <div className="bg-[#0B0F19] border border-[#2F2F2F] rounded-xl p-6 mb-8 shadow-xl">
+      <div className="bg-gradient-to-b from-[#0B0F19] to-black border border-white/10 rounded-2xl p-6 mb-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
         <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-[#00E5FF] mb-4">
-          INFORMATIONS DU COMPTE
+          IDENTIFICATION DU COMPTE
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-black p-4 rounded-lg border border-[#2F2F2F]">
-            <span className="text-gray-400 block text-xs uppercase font-bold mb-1">Nom</span>
-            <span className="text-white font-medium text-base">{user?.nom || 'Non renseigné'}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-inter">
+          <div className="bg-black/60 border border-white/10 p-4 rounded-xl backdrop-blur-md">
+            <span className="text-gray-500 block text-xs uppercase font-bold tracking-wider mb-1">Nom</span>
+            <span className="text-white font-semibold text-base">{user?.nom || 'Non renseigné'}</span>
           </div>
-          <div className="bg-black p-4 rounded-lg border border-[#2F2F2F]">
-            <span className="text-gray-400 block text-xs uppercase font-bold mb-1">Prénom</span>
-            <span className="text-white font-medium text-base">{user?.prenom || 'Non renseigné'}</span>
+          <div className="bg-black/60 border border-white/10 p-4 rounded-xl backdrop-blur-md">
+            <span className="text-gray-500 block text-xs uppercase font-bold tracking-wider mb-1">Prénom</span>
+            <span className="text-white font-semibold text-base">{user?.prenom || 'Non renseigné'}</span>
           </div>
-          <div className="bg-black p-4 rounded-lg border border-[#2F2F2F]">
-            <span className="text-gray-400 block text-xs uppercase font-bold mb-1">Adresse Email</span>
-            <span className="text-white font-medium text-base">{user?.email || 'Non renseigné'}</span>
+          <div className="bg-black/60 border border-white/10 p-4 rounded-xl backdrop-blur-md">
+            <span className="text-gray-500 block text-xs uppercase font-bold tracking-wider mb-1">Adresse Email</span>
+            <span className="text-white font-semibold text-base">{user?.email || 'Non renseigné'}</span>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold">
+        <div className="bg-[#FF003C]/10 border border-[#FF003C]/30 text-[#FF003C] p-4 rounded-xl mb-6 font-semibold font-inter">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-16">
+        <div className="text-center py-20">
           <h2 className="font-['Bebas_Neue'] text-3xl tracking-wider text-[#00E5FF] animate-pulse">
-            CHARGEMENT DE VOS RÉSERVATIONS...
+            CHARGEMENT DE VOS DONNÉES...
           </h2>
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-12 font-inter">
           
           {/* SECTION 1 : EN ATTENTE */}
           <section>
-            <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-yellow-400 mb-4">
-              Réservations en attente ({enAttente.length})
+            <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-amber-400 mb-4 flex items-center gap-3">
+              Réservations en attente <span className="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-mono">{enAttente.length}</span>
             </h2>
             {enAttente.length === 0 ? (
-              <p className="text-gray-500 text-sm italic bg-[#0B0F19] border border-[#2F2F2F] p-4 rounded-xl">Aucune réservation en attente.</p>
+              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl">Aucune réservation en attente.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enAttente.map(resa => (
                   <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} />
                 ))}
@@ -134,13 +148,13 @@ function Profile({ user, onBackToCatalog }) {
 
           {/* SECTION 2 : EN COURS / VALIDÉES */}
           <section>
-            <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-[#00E5FF] mb-4">
-              Réservations en cours / validées ({enCoursOuValidee.length})
+            <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-[#00E5FF] mb-4 flex items-center gap-3">
+              Réservations en cours / validées <span className="bg-[#00E5FF]/20 text-[#00E5FF] text-xs px-2.5 py-0.5 rounded-full font-mono">{enCoursOuValidee.length}</span>
             </h2>
             {enCoursOuValidee.length === 0 ? (
-              <p className="text-gray-500 text-sm italic bg-[#0B0F19] border border-[#2F2F2F] p-4 rounded-xl">Aucune réservation active pour le moment.</p>
+              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl">Aucune réservation active pour le moment.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enCoursOuValidee.map(resa => (
                   <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} />
                 ))}
@@ -150,13 +164,13 @@ function Profile({ user, onBackToCatalog }) {
 
           {/* SECTION 3 : TERMINÉES / HISTORIQUE */}
           <section>
-            <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-gray-400 mb-4">
-              Historique (Terminées / Annulées) ({terminees.length})
+            <h2 className="font-['Bebas_Neue'] text-2xl tracking-wider text-gray-400 mb-4 flex items-center gap-3">
+              Historique des emprunts <span className="bg-white/10 text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-mono">{terminees.length}</span>
             </h2>
             {terminees.length === 0 ? (
-              <p className="text-gray-500 text-sm italic bg-[#0B0F19] border border-[#2F2F2F] p-4 rounded-xl">Aucun historique disponible.</p>
+              <p className="text-gray-500 text-sm italic bg-[#0B0F19]/50 border border-white/5 p-4 rounded-xl">Aucun historique disponible.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {terminees.map(resa => (
                   <ReservationCard key={resa._id} resa={resa} getStatusBadge={getStatusBadge} formatDateLocale={formatDateLocale} />
                 ))}
@@ -172,25 +186,25 @@ function Profile({ user, onBackToCatalog }) {
 
 function ReservationCard({ resa, getStatusBadge, formatDateLocale }) {
   return (
-    <div className="bg-[#0B0F19] border border-[#2F2F2F] rounded-xl p-5 shadow-xl flex flex-col justify-between">
+    <div className="bg-gradient-to-b from-[#0B0F19] to-black border border-white/10 hover:border-[#00E5FF]/30 rounded-2xl p-6 shadow-xl flex flex-col justify-between transition-all duration-300 font-inter">
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-mono text-gray-500">RÉSA #{resa._id}</span>
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-mono text-gray-400 tracking-wider">RÉSERVATION #{resa._id}</span>
           {getStatusBadge(resa.statut)}
         </div>
 
-        <div className="text-xs text-gray-400 mb-4 bg-black p-3 rounded-lg border border-[#2F2F2F] space-y-1">
-          <div><strong className="text-gray-300">Du :</strong> {formatDateLocale(resa.dateDebut)}</div>
-          <div><strong className="text-gray-300">Au :</strong> {formatDateLocale(resa.dateFin)}</div>
+        <div className="text-xs text-gray-300 mb-5 bg-black/60 p-4 rounded-xl border border-white/5 space-y-1.5">
+          <div className="flex justify-between"><span className="text-gray-500 font-medium">Début :</span> <span className="font-mono text-white">{formatDateLocale(resa.dateDebut)}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500 font-medium">Fin :</span> <span className="font-mono text-white">{formatDateLocale(resa.dateFin)}</span></div>
         </div>
 
-        <div className="space-y-2 mb-2">
+        <div className="space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Matériel emprunté :</span>
-          <ul className="divide-y divide-[#2F2F2F]">
+          <ul className="divide-y divide-white/5">
             {resa.produits.map((item, idx) => (
-              <li key={idx} className="py-2 flex items-center justify-between text-sm">
-                <span className="text-white font-medium">{item.nom}</span>
-                <span className="bg-[#2F2F2F] text-gray-300 px-2 py-0.5 rounded text-xs font-bold">Qté : {item.quantite}</span>
+              <li key={idx} className="py-2.5 flex items-center justify-between text-sm">
+                <span className="text-gray-200 font-medium">{item.nom}</span>
+                <span className="bg-white/5 text-cyan-300 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold border border-white/5">x{item.quantite}</span>
               </li>
             ))}
           </ul>

@@ -21,9 +21,11 @@ app.use((req, res, next) => {
 // --- IMPORT ET MONTAGE DES ROUTES ---
 const produitsRoutes = require('./routes/produits');
 const reservationsRoutes = require('./routes/reservations');
+const authRoutes = require('./routes/auth'); // 👈 1. Import des routes d'authentification
 
 app.use('/api/produits', produitsRoutes);
 app.use('/api/reservations', reservationsRoutes);
+app.use('/api/auth', authRoutes); // 👈 2. Montage de la route d'auth sur /api/auth
 
 app.get('/', (req, res) => {
   res.json({ message: "API Campus Matériel opérationnelle 🚀" });

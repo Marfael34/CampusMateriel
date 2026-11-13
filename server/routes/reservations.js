@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { Reservation } = require('../models');
+const verifyToken = require('../middleware/auth'); // Import du middleware de sécurité JWT
 
-router.post('/', async (req, res) => {
+// La route est maintenant protégée par verifyToken
+router.post('/', verifyToken, async (req, res) => {
   try {
-    const { user_id, dateDebut, dateFin, produits } = req.body;
+    // Le user_id est récupéré directement et de façon sécurisée du JWT décodé
+    const user_id = req.user.id; 
+    const { dateDebut, dateFin, produits } = req.body;
+    
     const debut = new Date(dateDebut);
     const fin = new Date(dateFin);
 
@@ -37,7 +42,7 @@ router.post('/', async (req, res) => {
       dateDebut: debut,
       dateFin: fin,
       statut: "en_attente",
-      user_id: Number(user_id),
+      user_id: Number(user_id), // Issu du token JWT
       produits: produits.map(p => ({
         _id: Number(p._id),
         nom: p.nom,

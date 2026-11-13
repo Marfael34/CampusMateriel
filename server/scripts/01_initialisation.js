@@ -120,6 +120,11 @@ stock.reservations.createIndex({ statut: 1, dateDebut: -1 });
 
 // 7. Données de test (Seed)
 stock.users.insertMany([
+
+    // Mots de passe de test :
+    // Admin (id 1) : Admin2026
+    // Lucas (id 2) : Milo52
+    // Eric  (id 3) : Histoire201
     {
         _id: Int32(1),
         nom: "Admin",

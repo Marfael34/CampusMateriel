@@ -158,6 +158,8 @@ function App() {
       if (!res.ok) throw new Error(data.error || "Erreur lors de la réservation");
 
       setSuccessMessage("Réservation du panier enregistrée avec succès. En attente de validation.");
+
+      setTimeout(() => setSuccessMessage(null), 3000);
       
       await fetch('http://localhost:5000/api/panier', {
         method: 'DELETE',
